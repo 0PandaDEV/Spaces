@@ -1,0 +1,9 @@
+name: Spaces
+version: '${project.version}'
+main: net.pandadev.spaces.Main
+api-version: '1.13'
+commands:
+  claim:
+    aliases:
+      - unclaim
+      - unclaimall
