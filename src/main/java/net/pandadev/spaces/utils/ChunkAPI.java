@@ -9,9 +9,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static net.pandadev.spaces.utils.Configs.chunksConfig;
 
@@ -23,16 +21,11 @@ public class ChunkAPI {
         if (chunksConfig == null) {
             Configs.createChunksConfig();
         }
+
         String chunkCords = chunk.getX() + ";" + chunk.getZ();
+        String uniqueKey = chunk.getWorld().getName() + "," + chunkCords;
 
-        List chunks = new ArrayList<>();
-        if (config.getList(player.getUniqueId() + ".chunks") != null) {
-            chunks = config.getList(player.getUniqueId() + ".chunks");
-        }
-
-        chunks.add(chunkCords);
-
-        config.set(player.getUniqueId() + ".chunks", chunks);
+        config.set(player.getUniqueId() + ".chunks." + uniqueKey, chunkCords);
         Configs.saveChunksConfig();
     }
 
@@ -42,12 +35,10 @@ public class ChunkAPI {
         }
 
         String chunkCords = chunk.getX() + ";" + chunk.getZ();
+        String uniqueKey = chunk.getWorld().getName() + "," + chunkCords;
 
-        List chunks = config.getList(player.getUniqueId() + ".chunks");
-
-        chunks.remove(chunkCords);
-
-        config.set(player.getUniqueId() + ".chunks", chunks);
+        config.set(player.getUniqueId() + ".chunks." + uniqueKey, null);
+        Configs.saveChunksConfig();
     }
 
     public static void unclaimAll(Player player) {
@@ -64,31 +55,39 @@ public class ChunkAPI {
             Configs.createChunksConfig();
         }
 
-        return getAllChunks(chunk.getWorld()).contains(chunk);
+        String chunkCords = chunk.getX() + ";" + chunk.getZ();
+        String uniqueKey = chunk.getWorld().getName() + "," + chunkCords;
+
+        for (String key : config.getKeys(false)) {
+            if (config.contains(key + ".chunks." + uniqueKey)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public static boolean isChunkClaimedByPlayer(Player player, Chunk chunk) {
         if (chunksConfig == null) {
             Configs.createChunksConfig();
         }
-        String chunkCords = chunk.getX() + ";" + chunk.getZ();
-        List<String> playerChunks = config.getStringList(player.getUniqueId() + ".chunks");
 
-        return playerChunks.contains(chunkCords);
+        String chunkCords = chunk.getX() + ";" + chunk.getZ();
+        String uniqueKey = chunk.getWorld().getName() + "," + chunkCords;
+
+        return config.contains(player.getUniqueId() + ".chunks." + uniqueKey);
     }
 
-    public static List<Chunk> getAllChunks(World world) {
-        List<Chunk> chunks = new ArrayList<>();
+    public static List<String> getAllChunks(World world) {
+        List<String> chunks = new ArrayList<>();
         for (String key : config.getKeys(false)) {
-            List<String> chunkCoordinates = config.getStringList(key + ".chunks");
-
-            for (String coordinate : chunkCoordinates) {
-                String[] parts = coordinate.split(";");
-                int x = Integer.parseInt(parts[0]);
-                int z = Integer.parseInt(parts[1]);
-                if (world != null) {
-                    Chunk chunk = world.getChunkAt(x, z);
-                    chunks.add(chunk);
+            ConfigurationSection section = config.getConfigurationSection(key + ".chunks");
+            if (section != null) {
+                for (String chunkKey : section.getKeys(false)) {
+                    String worldName = chunkKey.split(",")[0];
+                    if (worldName.equals(world.getName())) {
+                        chunks.add(section.getString(chunkKey));
+                    }
                 }
             }
         }
@@ -100,16 +99,25 @@ public class ChunkAPI {
         if (chunksConfig == null) {
             Configs.createChunksConfig();
         }
-        List<String> chunkCoordinates = config.getStringList(player.getUniqueId() + ".chunks");
 
-        for (String coordinate : chunkCoordinates) {
-            String[] parts = coordinate.split(";");
-            int x = Integer.parseInt(parts[0]);
-            int z = Integer.parseInt(parts[1]);
-            Chunk chunk = player.getWorld().getChunkAt(x, z);
-            chunks.add(chunk);
+        ConfigurationSection section = config.getConfigurationSection(player.getUniqueId() + ".chunks");
+
+        if (section != null) {
+            for (String chunkKey : section.getKeys(false)) {
+                String chunkCords = section.getString(chunkKey);
+                String[] split = chunkCords.split(";");
+                int x = Integer.parseInt(split[0]);
+                int z = Integer.parseInt(split[1]);
+
+                String worldName = chunkKey.split(",")[0];
+                World world = Bukkit.getWorld(worldName);
+                if (world != null) {
+                    Chunk chunk = world.getChunkAt(x, z);
+                    chunks.add(chunk);
+                }
+            }
         }
+
         return chunks;
     }
-
 }

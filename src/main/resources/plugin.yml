@@ -7,3 +7,4 @@ commands:
     aliases:
       - unclaim
       - unclaimall
+      - claims

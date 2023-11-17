@@ -16,11 +16,11 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class ParticleManager implements Listener {
     private static HashMap<UUID, BukkitTask> tasks = new HashMap<>();
     private static HashMap<UUID, Chunk> chunks = new HashMap<>();
-
     public static void claim(Player player) {
         stop(player);
 
@@ -29,17 +29,19 @@ public class ParticleManager implements Listener {
 
         chunks.put(player.getUniqueId(), chunk);
 
-        List<Chunk> claimedChunks = ChunkAPI.getAllPlayerChunks(player);
-
         BukkitTask task = new BukkitRunnable() {
             @Override
             public void run() {
+                List<Chunk> claimedChunks = ChunkAPI.getAllPlayerChunks(player).stream()
+                        .filter(c -> c.getWorld().equals(player.getWorld()))
+                        .collect(Collectors.toList());
+
                 for (Chunk claimedChunk : claimedChunks) {
                     if (!claimedChunk.equals(chunks.get(player.getUniqueId()))) {
                         displayParticleBorder(player, claimedChunk, Color.WHITE);
                     }
                 }
-                displayRainbowParticleBorder(player, chunks.get(player.getUniqueId()));
+                displayParticleBorder(player, chunks.get(player.getUniqueId()), Color.GREEN);
             }
         }.runTaskTimer(Main.getInstance(), 0L, 1L);
 
@@ -54,11 +56,13 @@ public class ParticleManager implements Listener {
 
         chunks.put(player.getUniqueId(), chunk);
 
-        List<Chunk> claimedChunks = ChunkAPI.getAllPlayerChunks(player);
-
         BukkitTask task = new BukkitRunnable() {
             @Override
             public void run() {
+                List<Chunk> claimedChunks = ChunkAPI.getAllPlayerChunks(player).stream()
+                        .filter(c -> c.getWorld().equals(player.getWorld()))
+                        .collect(Collectors.toList());
+
                 for (Chunk claimedChunk : claimedChunks) {
                     if (!claimedChunk.equals(chunks.get(player.getUniqueId()))) {
                         displayParticleBorder(player, claimedChunk, Color.WHITE);
@@ -81,11 +85,13 @@ public class ParticleManager implements Listener {
 
         chunks.put(player.getUniqueId(), chunk);
 
-        List<Chunk> claimedChunks = ChunkAPI.getAllPlayerChunks(player);
-
         BukkitTask task = new BukkitRunnable() {
             @Override
             public void run() {
+                List<Chunk> claimedChunks = ChunkAPI.getAllPlayerChunks(player).stream()
+                        .filter(c -> c.getWorld().equals(player.getWorld()))
+                        .collect(Collectors.toList());
+
                 for (Chunk claimedChunk : claimedChunks) {
                     if (!claimedChunk.equals(chunks.get(player.getUniqueId()))) {
                         displayParticleBorder(player, claimedChunk, Color.RED);
@@ -103,11 +109,13 @@ public class ParticleManager implements Listener {
     public static void displayAllClaimedChunks(Player player) {
         stop(player);
 
-        List<Chunk> claimedChunks = ChunkAPI.getAllPlayerChunks(player);
-
         BukkitTask task = new BukkitRunnable() {
             @Override
             public void run() {
+                List<Chunk> claimedChunks = ChunkAPI.getAllPlayerChunks(player).stream()
+                        .filter(c -> c.getWorld().equals(player.getWorld()))
+                        .collect(Collectors.toList());
+
                 for (Chunk claimedChunk : claimedChunks) {
                     displayParticleBorder(player, claimedChunk, java.awt.Color.WHITE);
                 }
@@ -118,39 +126,20 @@ public class ParticleManager implements Listener {
     }
 
     private static void displayParticleBorder(Player player, Chunk chunk, java.awt.Color color) {
-        int chunkX = chunk.getX() * 16;
-        int chunkZ = chunk.getZ() * 16;
-        double playerY = player.getEyeLocation().getY() - 1;
+        World world = player.getWorld();
+        if (chunk.getWorld().equals(world)) {
+            int chunkX = chunk.getX() * 16;
+            int chunkZ = chunk.getZ() * 16;
+            double playerY = player.getEyeLocation().getY() - 1;
 
-        for (int i = chunkX; i < chunkX + 16; i++) {
-            player.spawnParticle(Particle.REDSTONE, i, playerY, chunkZ, 0, 0, 0, 0, new Particle.DustOptions(org.bukkit.Color.fromRGB(color.getRed(), color.getGreen(), color.getBlue()), 1));
-            player.spawnParticle(Particle.REDSTONE, i, playerY, chunkZ + 16, 0, 0, 0, 0, new Particle.DustOptions(org.bukkit.Color.fromRGB(color.getRed(), color.getGreen(), color.getBlue()), 1));
-        }
-        for (int i = chunkZ; i < chunkZ + 16; i++) {
-            player.spawnParticle(Particle.REDSTONE, chunkX, playerY, i, 0, 0, 0, 0, new Particle.DustOptions(org.bukkit.Color.fromRGB(color.getRed(), color.getGreen(), color.getBlue()), 1));
-            player.spawnParticle(Particle.REDSTONE, chunkX + 16, playerY, i, 0, 0, 0, 0, new Particle.DustOptions(org.bukkit.Color.fromRGB(color.getRed(), color.getGreen(), color.getBlue()), 1));
-        }
-    }
-
-    private static void displayRainbowParticleBorder(Player player, Chunk chunk) {
-        int chunkX = chunk.getX() * 16;
-        int chunkZ = chunk.getZ() * 16;
-        double playerY = player.getEyeLocation().getY() - 1;
-        float hue = 0;
-        float saturation = 1;
-        float brightness = 1;
-
-        for (int i = chunkX; i < chunkX + 16; i++) {
-            java.awt.Color color = java.awt.Color.getHSBColor(hue, saturation, brightness);
-            player.spawnParticle(Particle.REDSTONE, i, playerY, chunkZ, 0, 0, 0, 0, new Particle.DustOptions(org.bukkit.Color.fromRGB(color.getRed(), color.getGreen(), color.getBlue()), 1));
-            player.spawnParticle(Particle.REDSTONE, i, playerY, chunkZ + 16, 0, 0, 0, 0, new Particle.DustOptions(org.bukkit.Color.fromRGB(color.getRed(), color.getGreen(), color.getBlue()), 1));
-            hue += 1f / 32f;
-        }
-        for (int i = chunkZ; i < chunkZ + 16; i++) {
-            java.awt.Color color = java.awt.Color.getHSBColor(hue, saturation, brightness);
-            player.spawnParticle(Particle.REDSTONE, chunkX, playerY, i, 0, 0, 0, 0, new Particle.DustOptions(org.bukkit.Color.fromRGB(color.getRed(), color.getGreen(), color.getBlue()), 1));
-            player.spawnParticle(Particle.REDSTONE, chunkX + 16, playerY, i, 0, 0, 0, 0, new Particle.DustOptions(org.bukkit.Color.fromRGB(color.getRed(), color.getGreen(), color.getBlue()), 1));
-            hue += 1f / 32f;
+            for (int i = chunkX; i < chunkX + 16; i++) {
+                player.spawnParticle(Particle.REDSTONE, i, playerY, chunkZ, 0, 0, 0, 0, new Particle.DustOptions(org.bukkit.Color.fromRGB(color.getRed(), color.getGreen(), color.getBlue()), 1));
+                player.spawnParticle(Particle.REDSTONE, i, playerY, chunkZ + 16, 0, 0, 0, 0, new Particle.DustOptions(org.bukkit.Color.fromRGB(color.getRed(), color.getGreen(), color.getBlue()), 1));
+            }
+            for (int i = chunkZ; i < chunkZ + 16; i++) {
+                player.spawnParticle(Particle.REDSTONE, chunkX, playerY, i, 0, 0, 0, 0, new Particle.DustOptions(org.bukkit.Color.fromRGB(color.getRed(), color.getGreen(), color.getBlue()), 1));
+                player.spawnParticle(Particle.REDSTONE, chunkX + 16, playerY, i, 0, 0, 0, 0, new Particle.DustOptions(org.bukkit.Color.fromRGB(color.getRed(), color.getGreen(), color.getBlue()), 1));
+            }
         }
     }
 
