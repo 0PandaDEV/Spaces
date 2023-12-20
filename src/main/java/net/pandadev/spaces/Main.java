@@ -1,6 +1,7 @@
 package net.pandadev.spaces;
 
 import net.pandadev.spaces.commands.ClaimCommand;
+import net.pandadev.spaces.listeners.ProtectListener;
 import net.pandadev.spaces.utils.Configs;
 import net.pandadev.spaces.utils.ParticleManager;
 import org.bukkit.Bukkit;
@@ -37,8 +38,8 @@ public final class Main extends JavaPlugin {
     }
 
     private void registerListeners() {
-        PluginManager pluginManager = Bukkit.getPluginManager();
-        pluginManager.registerEvents(new ParticleManager(), this);
+        Bukkit.getPluginManager().registerEvents(new ParticleManager(), this);
+        Bukkit.getPluginManager().registerEvents(new ProtectListener(), this);
     }
 
 
